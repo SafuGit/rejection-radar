@@ -6,6 +6,9 @@ import {
 } from '@angular/ssr/node';
 import express from 'express';
 import { join } from 'node:path';
+import bcrypt from 'bcrypt';
+import { db } from './db';
+import { users } from './db/schema';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
 
@@ -23,6 +26,21 @@ const angularApp = new AngularNodeAppEngine();
  * });
  * ```
  */
+
+// *Register
+app.post('/api/auth/register', async (req, res) => {
+  const { email, password } = req.body;
+  const hashed = await bcrypt.hash(password, 10);
+  try {
+    await db.insert(users).values({
+      email,
+      passwordHash: hashed
+    });
+    res.status(201).send({ message: 'User registered successfully' });
+  } catch (error) {
+    res.status(500).send({ message: 'Error registering user', error });
+  }
+})
 
 /**
  * Serve static files from /browser

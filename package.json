@@ -49,6 +49,7 @@
     "@angular/cli": "^21.0.4",
     "@angular/compiler-cli": "^21.0.0",
     "@tailwindcss/postcss": "^4.1.12",
+    "@types/bcrypt": "^6.0.0",
     "@types/express": "^5.0.1",
     "@types/node": "^20.17.19",
     "drizzle-kit": "^0.31.8",
