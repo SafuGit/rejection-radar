@@ -62,7 +62,7 @@ export class Register {
       this.authService.register(email!, password!).subscribe({
         next: () => {
           this.isLoading.set(false);
-          this.router.navigate(['/login']);
+          this.router.navigate(['/verify-otp'], { queryParams: { email } });
         },
         error: (error) => {
           this.isLoading.set(false);
