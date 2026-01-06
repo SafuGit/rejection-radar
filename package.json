@@ -51,6 +51,7 @@
     "@tailwindcss/postcss": "^4.1.12",
     "@types/bcrypt": "^6.0.0",
     "@types/express": "^5.0.1",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^20.17.19",
     "drizzle-kit": "^0.31.8",
     "jsdom": "^27.1.0",

@@ -9,6 +9,8 @@ import { join } from 'node:path';
 import bcrypt from 'bcrypt';
 import { db } from './db';
 import { users } from './db/schema';
+import jwt from 'jsonwebtoken';
+import { eq } from 'drizzle-orm';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
 
@@ -40,7 +42,25 @@ app.post('/api/auth/register', async (req, res) => {
   } catch (error) {
     res.status(500).send({ message: 'Error registering user', error });
   }
-})
+});
+
+// *Login
+app.post('/api/auth/login', async (req, res) => {
+  const { email, password } = req.body;
+  const user = await db.select().from(users).where(eq(users.email, email)).limit(1);
+  if (!user || user.length === 0) return res.status(401).send({ message: 'Invalid email or password' });
+
+  const match = await bcrypt.compare(password, user[0].passwordHash);
+  if (!match) return res.status(401).send({ message: 'Invalid email or password' });
+
+  const secret = process.env["JWT_SECRET"];
+  if (!secret) {
+    throw new Error('JWT_SECRET environment variable is not defined');
+  }
+
+  const token = jwt.sign({ id: user[0].id, email: user[0].email }, secret, { expiresIn: '1h' });
+  res.json({ token });
+});
 
 /**
  * Serve static files from /browser
