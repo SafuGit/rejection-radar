@@ -55,11 +55,11 @@ app.post('/api/auth/login', async (req, res) => {
 
   const secret = process.env["JWT_SECRET"];
   if (!secret) {
-    throw new Error('JWT_SECRET environment variable is not defined');
+    return res.json({ message: 'JWT_SECRET environment variable is not defined' });
   }
 
   const token = jwt.sign({ id: user[0].id, email: user[0].email }, secret, { expiresIn: '1h' });
-  res.json({ token });
+  return res.json({ token });
 });
 
 /**
