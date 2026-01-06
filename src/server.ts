@@ -8,9 +8,10 @@ import express from 'express';
 import { join } from 'node:path';
 import bcrypt from 'bcryptjs';
 import { db } from './db';
-import { users } from './db/schema';
+import { otp, users } from './db/schema';
 import jwt from 'jsonwebtoken';
 import { eq } from 'drizzle-orm';
+import nodemailer from 'nodemailer';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
 
@@ -29,6 +30,48 @@ const angularApp = new AngularNodeAppEngine();
  * ```
  */
 
+const transporter = nodemailer.createTransport({
+  host: 'smtp.ethereal.email',
+  port: 587,
+  auth: {
+    user: 'mafalda.rippin2@ethereal.email',
+    pass: '7WbJteKYakXcRaZ868',
+  },
+});
+
+function generateOTP() {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+// *Send Email Token
+app.post('/api/auth/send-token', async (req, res) => {
+  const { email } = req.body;
+  const user = await db.select().from(users).where(eq(users.email, email)).limit(1);
+  if (!user || user.length === 0) return res.status(404).send({ message: 'Email not found' });
+
+  const generatedOTP = generateOTP();
+  try {
+    await db.insert(otp).values({
+      userId: user[0].id,
+      otp: generatedOTP,
+      expiresIn: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes from now
+    })
+
+    await transporter.sendMail({
+      from: "Rejection Radar <no-reply@rejectionradar.com>",
+      to: email,
+      subject: 'Your Login Token',
+      html: `<p>Your login token is: <strong>${generatedOTP}</strong></p><p>This token will expire in 10 minutes.</p>`,
+    });
+
+    return res.status(200).send({ message: 'Token sent successfully', token: generatedOTP });
+  } catch (error) {
+    return res.status(500).send({ message: 'Error sending token', error });
+  }
+});
+
+app.post
+
 // *Register
 app.post('/api/auth/register', async (req, res) => {
   const { email, password } = req.body;
@@ -36,7 +79,7 @@ app.post('/api/auth/register', async (req, res) => {
   try {
     await db.insert(users).values({
       email,
-      passwordHash: hashed
+      passwordHash: hashed,
     });
     res.status(201).send({ message: 'User registered successfully' });
   } catch (error) {
@@ -48,12 +91,13 @@ app.post('/api/auth/register', async (req, res) => {
 app.post('/api/auth/login', async (req, res) => {
   const { email, password } = req.body;
   const user = await db.select().from(users).where(eq(users.email, email)).limit(1);
-  if (!user || user.length === 0) return res.status(401).send({ message: 'Invalid email or password' });
+  if (!user || user.length === 0)
+    return res.status(401).send({ message: 'Invalid email or password' });
 
   const match = await bcrypt.compare(password, user[0].passwordHash);
   if (!match) return res.status(401).send({ message: 'Invalid email or password' });
 
-  const secret = process.env["JWT_SECRET"];
+  const secret = process.env['JWT_SECRET'];
   if (!secret) {
     return res.json({ message: 'JWT_SECRET environment variable is not defined' });
   }
@@ -70,7 +114,7 @@ app.use(
     maxAge: '1y',
     index: false,
     redirect: false,
-  }),
+  })
 );
 
 /**
@@ -79,9 +123,7 @@ app.use(
 app.use((req, res, next) => {
   angularApp
     .handle(req)
-    .then((response) =>
-      response ? writeResponseToNodeResponse(response, res) : next(),
-    )
+    .then((response) => (response ? writeResponseToNodeResponse(response, res) : next()))
     .catch(next);
 });
 
