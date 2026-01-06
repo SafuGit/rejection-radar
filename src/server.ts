@@ -63,7 +63,7 @@ function verifyJWT(req: Request, res: Response, next: NextFunction) {
 
 const transporter = nodemailer.createTransport({
   host: process.env['SMTP_HOST'],
-  port: 587,
+  port: parseInt(process.env['SMTP_PORT'] || '587', 10),
   auth: {
     user: process.env['SMTP_USER'],
     pass: process.env['SMTP_PASS'],
