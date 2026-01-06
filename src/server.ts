@@ -46,8 +46,8 @@ function generateOTP() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-// *Send Email Token
-app.post('/api/auth/send-token', async (req, res) => {
+// *Send Email OTP
+app.post('/api/auth/send-otp', async (req, res) => {
   const { email } = req.body;
   const user = await db.select().from(users).where(eq(users.email, email)).limit(1);
   if (!user || user.length === 0) return res.status(404).send({ message: 'Email not found' });
@@ -58,24 +58,25 @@ app.post('/api/auth/send-token', async (req, res) => {
       userId: user[0].id,
       otp: generatedOTP,
       expiresIn: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes from now
-    })
+    });
 
     await transporter.sendMail({
       from: "Rejection Radar <no-reply@rejectionradar.com>",
       to: email,
-      subject: 'Your Login Token',
-      html: `<p>Your login token is: <strong>${generatedOTP}</strong></p><p>This token will expire in 10 minutes.</p>`,
+      subject: 'Your Verification Code',
+      html: `<p>Your verification code is: <strong>${generatedOTP}</strong></p><p>This code will expire in 10 minutes.</p>`,
     });
 
-    return res.status(200).send({ message: 'Token sent successfully', token: generatedOTP });
+    return res.status(200).send({ message: 'OTP sent successfully' });
   } catch (error) {
-    return res.status(500).send({ message: 'Error sending token', error });
+    console.error('Error sending OTP:', error);
+    return res.status(500).send({ message: 'Error sending OTP', error });
   }
 });
 
-// *Verify Email Token
+// *Verify Email OTP
 app.post('/api/auth/verify-token', async (req, res) => {
-  const { email, otpInput } = req.body;
+  const { email, otp: otpInput } = req.body;
   const user = await db.select().from(users).where(eq(users.email, email)).limit(1);
   if (!user || user.length === 0) return res.status(404).send({ message: 'Email not found' });
 
@@ -107,13 +108,34 @@ app.post('/api/auth/register', async (req, res) => {
   const { email, password } = req.body;
   const hashed = await bcrypt.hash(password, 10);
   try {
-    await db.insert(users).values({
+    const existingUser = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    if (existingUser.length > 0) {
+      return res.status(400).send({ message: 'User already exists' });
+    }
+
+    const [newUser] = await db.insert(users).values({
       email,
       passwordHash: hashed,
+    }).returning();
+
+    const generatedOTP = generateOTP();
+    await db.insert(otp).values({
+      userId: newUser.id,
+      otp: generatedOTP,
+      expiresIn: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes from now
     });
-    res.status(201).send({ message: 'User registered successfully' });
+
+    await transporter.sendMail({
+      from: "Rejection Radar <no-reply@rejectionradar.com>",
+      to: email,
+      subject: 'Verify Your Email',
+      html: `<p>Welcome to Rejection Radar!</p><p>Your verification code is: <strong>${generatedOTP}</strong></p><p>This code will expire in 10 minutes.</p>`,
+    });
+
+    return res.status(201).send({ message: 'User registered successfully. Please check your email for verification code.' });
   } catch (error) {
-    res.status(500).send({ message: 'Error registering user', error });
+    console.error('Registration error:', error);
+    return res.status(500).send({ message: 'Error registering user', error });
   }
 });
 

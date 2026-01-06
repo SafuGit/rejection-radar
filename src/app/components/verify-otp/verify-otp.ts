@@ -61,7 +61,7 @@ export class VerifyOtp {
           this.isLoading.set(false);
           this.successMessage.set('Email verified successfully!');
           setTimeout(() => {
-            this.router.navigate(['/dashboard']);
+            this.router.navigate(['/']);
           }, 1500);
         },
         error: (error) => {
