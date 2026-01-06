@@ -4,7 +4,7 @@ import {
   isMainModule,
   writeResponseToNodeResponse,
 } from '@angular/ssr/node';
-import express from 'express';
+import express, { NextFunction, Request, Response } from 'express';
 import { join } from 'node:path';
 import bcrypt from 'bcryptjs';
 import { db } from './db';
@@ -32,6 +32,34 @@ app.use(express.urlencoded({ extended: true }));
  * });
  * ```
  */
+
+function verifyJWT(req: Request, res: Response, next: NextFunction) {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const token = authHeader.split(' ')[1];
+  const secret = process.env['JWT_SECRET'];
+
+  if (!secret) {
+    return res.status(500).json({ message: 'JWT_SECRET not configured' });
+  }
+
+  jwt.verify(token, secret, (err, decoded) => {
+    if (err) {
+      return res.status(401).json({ message: 'Invalid or expired token' });
+    }
+
+    // attach user info to request
+    (req as any).user = decoded;
+    next();
+    return;
+  });
+
+  return;
+}
 
 const transporter = nodemailer.createTransport({
   host: 'smtp.ethereal.email',

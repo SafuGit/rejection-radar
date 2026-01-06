@@ -17,6 +17,9 @@
         },
         "@schematics/angular:service": {
           "path": "src/app/services"
+        },
+        "@schematics/angular:guard": {
+          "path": "src/app/guards"
         }
       },
       "root": "",
