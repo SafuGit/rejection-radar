@@ -8,6 +8,13 @@
       "when": 1767708093902,
       "tag": "0000_serious_agent_zero",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1767715035571,
+      "tag": "0001_yellow_cerebro",
+      "breakpoints": true
     }
   ]
 }
