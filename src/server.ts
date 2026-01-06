@@ -6,7 +6,7 @@ import {
 } from '@angular/ssr/node';
 import express from 'express';
 import { join } from 'node:path';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import { db } from './db';
 import { users } from './db/schema';
 import jwt from 'jsonwebtoken';

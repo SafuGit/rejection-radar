@@ -3,7 +3,7 @@ import { Register } from './components/register/register';
 
 export const routes: Routes = [
   {
-    path: '/register',
+    path: 'register',
     component: Register
   }
 ];

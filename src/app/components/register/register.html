@@ -1,1 +1,127 @@
-<p>register works!</p>
+<section class="w-full max-w-sm" hlmCard>
+  <div hlmCardHeader>
+    <h3 hlmCardTitle>Create an account</h3>
+    <p hlmCardDescription>Enter your details below to create your account</p>
+
+    <div hlmCardAction>
+      <button hlmBtn variant="link" (click)="navigateToLogin()">Login</button>
+    </div>
+  </div>
+
+  <div hlmCardContent>
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+      <div class="flex flex-col gap-6">
+        @if (errorMessage()) {
+          <div
+            class="rounded-md bg-red-50 p-3 text-sm text-red-800 border border-red-200"
+            role="alert"
+            aria-live="polite"
+          >
+            {{ errorMessage() }}
+          </div>
+        }
+
+        <div class="grid gap-2">
+          <label hlmLabel for="email">Email</label>
+          <input
+            type="email"
+            id="email"
+            placeholder="m@example.com"
+            formControlName="email"
+            hlmInput
+            [attr.aria-invalid]="
+              registerForm.get('email')?.invalid && registerForm.get('email')?.touched
+            "
+            [attr.aria-describedby]="
+              registerForm.get('email')?.invalid && registerForm.get('email')?.touched
+                ? 'email-error'
+                : null
+            "
+          />
+          @if (registerForm.get('email')?.invalid && registerForm.get('email')?.touched) {
+            <span class="text-sm text-red-600" id="email-error" role="alert">
+              @if (registerForm.get('email')?.errors?.['required']) {
+                Email is required
+              } @else if (registerForm.get('email')?.errors?.['email']) {
+                Please enter a valid email
+              }
+            </span>
+          }
+        </div>
+
+        <div class="grid gap-2">
+          <label hlmLabel for="password">Password</label>
+          <input
+            type="password"
+            id="password"
+            formControlName="password"
+            hlmInput
+            [attr.aria-invalid]="
+              registerForm.get('password')?.invalid && registerForm.get('password')?.touched
+            "
+            [attr.aria-describedby]="
+              registerForm.get('password')?.invalid && registerForm.get('password')?.touched
+                ? 'password-error'
+                : null
+            "
+          />
+          @if (registerForm.get('password')?.invalid && registerForm.get('password')?.touched) {
+            <span class="text-sm text-red-600" id="password-error" role="alert">
+              @if (registerForm.get('password')?.errors?.['required']) {
+                Password is required
+              } @else if (registerForm.get('password')?.errors?.['minlength']) {
+                Password must be at least 8 characters
+              }
+            </span>
+          }
+        </div>
+
+        <div class="grid gap-2">
+          <label hlmLabel for="confirmPassword">Confirm Password</label>
+          <input
+            type="password"
+            id="confirmPassword"
+            formControlName="confirmPassword"
+            hlmInput
+            [attr.aria-invalid]="
+              registerForm.get('confirmPassword')?.invalid &&
+              registerForm.get('confirmPassword')?.touched
+            "
+            [attr.aria-describedby]="
+              registerForm.get('confirmPassword')?.invalid &&
+              registerForm.get('confirmPassword')?.touched
+                ? 'confirm-password-error'
+                : null
+            "
+          />
+          @if (registerForm.get('confirmPassword')?.invalid &&
+          registerForm.get('confirmPassword')?.touched) {
+            <span class="text-sm text-red-600" id="confirm-password-error" role="alert">
+              @if (registerForm.get('confirmPassword')?.errors?.['required']) {
+                Please confirm your password
+              } @else if (registerForm.get('confirmPassword')?.errors?.['passwordMismatch']) {
+                Passwords do not match
+              }
+            </span>
+          }
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div hlmCardFooter class="flex-col gap-2">
+    <button
+      hlmBtn
+      type="submit"
+      class="w-full"
+      (click)="onSubmit()"
+      [disabled]="isLoading() || registerForm.invalid"
+    >
+      @if (isLoading()) {
+        Creating account...
+      } @else {
+        Create account
+      }
+    </button>
+  </div>
+</section>
