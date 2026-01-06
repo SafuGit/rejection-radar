@@ -89,6 +89,7 @@ app.post('/api/auth/verify-token', async (req, res) => {
   }
 
   await db.delete(otp).where(eq(otp.id, validOtp[0].id));
+  await db.update(users).set({ emailVerified: true }).where(eq(users.id, user[0].id));
 
   const secret = process.env['JWT_SECRET'];
 
