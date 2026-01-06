@@ -62,11 +62,11 @@ function verifyJWT(req: Request, res: Response, next: NextFunction) {
 }
 
 const transporter = nodemailer.createTransport({
-  host: 'smtp.ethereal.email',
+  host: process.env['SMTP_HOST'],
   port: 587,
   auth: {
-    user: 'mafalda.rippin2@ethereal.email',
-    pass: '7WbJteKYakXcRaZ868',
+    user: process.env['SMTP_USER'],
+    pass: process.env['SMTP_PASS'],
   },
 });
 
