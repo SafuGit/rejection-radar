@@ -10,7 +10,7 @@ export class AuthService {
 
   login(email: string, password: string) {
     return this.http
-      .post<{ token: string }>('/api/login', { email, password })
+      .post<{ token: string }>('/api/auth/login', { email, password })
       .pipe(tap((res) => localStorage.setItem('token', res.token)));
   }
 

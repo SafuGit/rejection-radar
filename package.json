@@ -5,9 +5,10 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
+    "build:ssr": "ng build && ng run rejection-radar:server",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "serve:ssr:rejection-radar": "node dist/rejection-radar/server/server.mjs",
+    "serve:ssr": "node dist/rejection-radar/server/server.mjs",
     "db:migrate": "drizzle-kit migrate",
     "db:generate": "drizzle-kit generate"
   },

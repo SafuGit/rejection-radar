@@ -18,8 +18,9 @@ const browserDistFolder = join(import.meta.dirname, '../browser');
 const app = express();
 const angularApp = new AngularNodeAppEngine();
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+const apiRouter = express.Router();
+apiRouter.use(express.json());
+apiRouter.use(express.urlencoded({ extended: true }));
 
 /**
  * Example Express Rest API endpoints can be defined here.
@@ -75,7 +76,7 @@ function generateOTP() {
 }
 
 // *Send Email OTP
-app.post('/api/auth/send-otp', async (req, res) => {
+apiRouter.post('/auth/send-otp', async (req, res) => {
   const { email } = req.body;
   const user = await db.select().from(users).where(eq(users.email, email)).limit(1);
   if (!user || user.length === 0) return res.status(404).send({ message: 'Email not found' });
@@ -103,7 +104,7 @@ app.post('/api/auth/send-otp', async (req, res) => {
 });
 
 // *Verify Email OTP
-app.post('/api/auth/verify-token', async (req, res) => {
+apiRouter.post('/auth/verify-token', async (req, res) => {
   const { email, otp: otpInput } = req.body;
   const user = await db.select().from(users).where(eq(users.email, email)).limit(1);
   if (!user || user.length === 0) return res.status(404).send({ message: 'Email not found' });
@@ -132,7 +133,7 @@ app.post('/api/auth/verify-token', async (req, res) => {
 });
 
 // *Register
-app.post('/api/auth/register', async (req, res) => {
+apiRouter.post('/auth/register', async (req, res) => {
   const { email, password } = req.body;
   const hashed = await bcrypt.hash(password, 10);
   try {
@@ -168,7 +169,7 @@ app.post('/api/auth/register', async (req, res) => {
 });
 
 // *Login
-app.post('/api/auth/login', async (req, res) => {
+apiRouter.post('/auth/login', async (req, res) => {
   const { email, password } = req.body;
   const user = await db.select().from(users).where(eq(users.email, email)).limit(1);
   if (!user || user.length === 0)
@@ -190,6 +191,9 @@ app.post('/api/auth/login', async (req, res) => {
   return res.json({ token });
 });
 
+// Mount API router
+app.use('/api', apiRouter);
+
 /**
  * Serve static files from /browser
  */
@@ -204,11 +208,19 @@ app.use(
 /**
  * Handle all other requests by rendering the Angular application.
  */
-app.use((req, res, next) => {
-  angularApp
-    .handle(req)
-    .then((response) => (response ? writeResponseToNodeResponse(response, res) : next()))
-    .catch(next);
+app.use(async (req, res, next) => {
+  if (req.path.startsWith('/api')) return next();
+
+  try {
+    const response = await angularApp.handle(req, { cloneRequest: true });
+    if (response) {
+      writeResponseToNodeResponse(response, res);
+    } else {
+      next();
+    }
+  } catch (err) {
+    next(err);
+  }
 });
 
 /**
