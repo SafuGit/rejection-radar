@@ -10,7 +10,7 @@ import bcrypt from 'bcryptjs';
 import { db } from './db';
 import { otp, users } from './db/schema';
 import jwt from 'jsonwebtoken';
-import { eq } from 'drizzle-orm';
+import { and, desc, eq, gt } from 'drizzle-orm';
 import nodemailer from 'nodemailer';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
@@ -70,7 +70,33 @@ app.post('/api/auth/send-token', async (req, res) => {
   }
 });
 
-app.post
+// *Verify Email Token
+app.post('/api/auth/verify-token', async (req, res) => {
+  const { email, otpInput } = req.body;
+  const user = await db.select().from(users).where(eq(users.email, email)).limit(1);
+  if (!user || user.length === 0) return res.status(404).send({ message: 'Email not found' });
+
+  const now = new Date();
+  const validOtp = await db
+    .select()
+    .from(otp)
+    .where(and(eq(otp.userId, user[0].id), gt(otp.expiresIn, now), eq(otp.otp, otpInput)))
+    .orderBy(desc(otp.id))
+    .limit(1);
+
+  if (!validOtp || validOtp.length === 0 || validOtp[0].otp !== otpInput) {
+    return res.status(401).send({ message: 'Invalid or expired OTP' });
+  }
+
+  await db.delete(otp).where(eq(otp.id, validOtp[0].id));
+
+  const secret = process.env['JWT_SECRET'];
+
+  if (!secret) return res.json({ message: 'JWT_SECRET environment variable is not defined' });
+
+  const token = jwt.sign({ id: user[0].id, email: user[0].email }, secret, { expiresIn: '1h' });
+  return res.json({ token });
+});
 
 // *Register
 app.post('/api/auth/register', async (req, res) => {
