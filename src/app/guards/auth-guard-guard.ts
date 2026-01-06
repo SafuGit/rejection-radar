@@ -12,15 +12,18 @@ function isTokenExpired(token: string): boolean {
 
 export const authGuard: CanActivateFn = () => {
   const isBrowser = typeof window !== 'undefined';
+
+  if (!isBrowser) {
+    return true;
+  }
+
   const router = inject(Router);
-  const token =  isBrowser ? localStorage.getItem('token') : null;
+  const token = localStorage.getItem('token');
 
   if (token && !isTokenExpired(token)) {
     return true;
   }
 
-  if (isBrowser) {
-    localStorage.removeItem('token');
-  }
+  localStorage.removeItem('token');
   return router.createUrlTree(['/login']);
 };
