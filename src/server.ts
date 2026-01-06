@@ -174,6 +174,10 @@ app.post('/api/auth/login', async (req, res) => {
   if (!user || user.length === 0)
     return res.status(401).send({ message: 'Invalid email or password' });
 
+  if (!user[0].emailVerified) {
+    return res.status(403).json({ message: 'Email not verified' });
+  }
+
   const match = await bcrypt.compare(password, user[0].passwordHash);
   if (!match) return res.status(401).send({ message: 'Invalid email or password' });
 
