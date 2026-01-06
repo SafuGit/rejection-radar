@@ -8,7 +8,17 @@
   "projects": {
     "rejection-radar": {
       "projectType": "application",
-      "schematics": {},
+      "schematics": {
+        "@schematics/angular:component": {
+          "path": "src/app/components",
+          "style": "css",
+          "skipTests": false,
+          "standalone": true
+        },
+        "@schematics/angular:service": {
+          "path": "src/app/services"
+        }
+      },
       "root": "",
       "sourceRoot": "src",
       "prefix": "app",
@@ -24,9 +34,7 @@
                 "input": "public"
               }
             ],
-            "styles": [
-              "src/styles.css"
-            ],
+            "styles": ["src/styles.css"],
             "server": "src/main.server.ts",
             "outputMode": "server",
             "ssr": {
