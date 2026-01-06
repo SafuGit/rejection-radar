@@ -1,0 +1,97 @@
+<section class="w-full max-w-sm" hlmCard>
+  <div hlmCardHeader>
+    <h3 hlmCardTitle>Verify your email</h3>
+    <p hlmCardDescription>Enter the 6-digit code sent to {{ email() }}</p>
+
+    <div hlmCardAction>
+      <button hlmBtn variant="link" (click)="navigateToRegister()">Back to Register</button>
+    </div>
+  </div>
+
+  <div hlmCardContent>
+    <form [formGroup]="otpForm" (ngSubmit)="onSubmit()">
+      <div class="flex flex-col gap-6">
+        @if (errorMessage()) {
+          <div
+            class="rounded-md bg-red-50 p-3 text-sm text-red-800 border border-red-200"
+            role="alert"
+            aria-live="polite"
+          >
+            {{ errorMessage() }}
+          </div>
+        } @if (successMessage()) {
+          <div
+            class="rounded-md bg-green-50 p-3 text-sm text-green-800 border border-green-200"
+            role="alert"
+            aria-live="polite"
+          >
+            {{ successMessage() }}
+          </div>
+        }
+
+        <div class="grid gap-2">
+          <label hlmLabel for="otp">Verification Code</label>
+          <input
+            type="text"
+            id="otp"
+            placeholder="000000"
+            formControlName="otp"
+            hlmInput
+            maxlength="6"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            autocomplete="one-time-code"
+            class="text-center text-2xl tracking-widest"
+            [attr.aria-invalid]="otpForm.get('otp')?.invalid && otpForm.get('otp')?.touched"
+            [attr.aria-describedby]="
+              otpForm.get('otp')?.invalid && otpForm.get('otp')?.touched ? 'otp-error' : null
+            "
+          />
+          @if (otpForm.get('otp')?.invalid && otpForm.get('otp')?.touched) {
+            <span class="text-sm text-red-600" id="otp-error" role="alert">
+              @if (otpForm.get('otp')?.errors?.['required']) {
+                Verification code is required
+              } @else if (otpForm.get('otp')?.errors?.['pattern']) {
+                Please enter a valid 6-digit code
+              }
+            </span>
+          }
+        </div>
+
+        <div class="text-center text-sm">
+          <span class="text-gray-600">Didn't receive the code?</span>
+          <button
+            type="button"
+            hlmBtn
+            variant="link"
+            class="px-1"
+            (click)="resendOtp()"
+            [disabled]="isResending()"
+          >
+            @if (isResending()) {
+              Sending...
+            } @else {
+              Resend Code
+            }
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div hlmCardFooter>
+    <button
+      hlmBtn
+      type="submit"
+      class="w-full"
+      (click)="onSubmit()"
+      [disabled]="isLoading() || otpForm.invalid"
+    >
+      @if (isLoading()) {
+        Verifying...
+      } @else {
+        Verify Email
+      }
+    </button>
+  </div>
+</section>

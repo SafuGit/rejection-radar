@@ -4,13 +4,23 @@ import {
   isMainModule,
   writeResponseToNodeResponse,
 } from '@angular/ssr/node';
-import express from 'express';
+import express, { NextFunction, Request, Response } from 'express';
 import { join } from 'node:path';
+import bcrypt from 'bcryptjs';
+import { db } from './db';
+import { otp, users } from './db/schema';
+import jwt from 'jsonwebtoken';
+import { and, desc, eq, gt } from 'drizzle-orm';
+import nodemailer from 'nodemailer';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
 
 const app = express();
 const angularApp = new AngularNodeAppEngine();
+
+const apiRouter = express.Router();
+apiRouter.use(express.json());
+apiRouter.use(express.urlencoded({ extended: true }));
 
 /**
  * Example Express Rest API endpoints can be defined here.
@@ -24,6 +34,166 @@ const angularApp = new AngularNodeAppEngine();
  * ```
  */
 
+function verifyJWT(req: Request, res: Response, next: NextFunction) {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const token = authHeader.split(' ')[1];
+  const secret = process.env['JWT_SECRET'];
+
+  if (!secret) {
+    return res.status(500).json({ message: 'JWT_SECRET not configured' });
+  }
+
+  jwt.verify(token, secret, (err, decoded) => {
+    if (err) {
+      return res.status(401).json({ message: 'Invalid or expired token' });
+    }
+
+    // attach user info to request
+    (req as any).user = decoded;
+    next();
+    return;
+  });
+
+  return;
+}
+
+const transporter = nodemailer.createTransport({
+  host: process.env['SMTP_HOST'],
+  port: parseInt(process.env['SMTP_PORT'] || '587', 10),
+  auth: {
+    user: process.env['SMTP_USER'],
+    pass: process.env['SMTP_PASS'],
+  },
+});
+
+function generateOTP() {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+// *Send Email OTP
+apiRouter.post('/auth/send-otp', async (req, res) => {
+  const { email } = req.body;
+  const user = await db.select().from(users).where(eq(users.email, email)).limit(1);
+  if (!user || user.length === 0) return res.status(404).send({ message: 'Email not found' });
+
+  const generatedOTP = generateOTP();
+  try {
+    await db.insert(otp).values({
+      userId: user[0].id,
+      otp: generatedOTP,
+      expiresIn: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes from now
+    });
+
+    await transporter.sendMail({
+      from: "Rejection Radar <no-reply@rejectionradar.com>",
+      to: email,
+      subject: 'Your Verification Code',
+      html: `<p>Your verification code is: <strong>${generatedOTP}</strong></p><p>This code will expire in 10 minutes.</p>`,
+    });
+
+    return res.status(200).send({ message: 'OTP sent successfully' });
+  } catch (error) {
+    console.error('Error sending OTP:', error);
+    return res.status(500).send({ message: 'Error sending OTP', error });
+  }
+});
+
+// *Verify Email OTP
+apiRouter.post('/auth/verify-token', async (req, res) => {
+  const { email, otp: otpInput } = req.body;
+  const user = await db.select().from(users).where(eq(users.email, email)).limit(1);
+  if (!user || user.length === 0) return res.status(404).send({ message: 'Email not found' });
+
+  const now = new Date();
+  const validOtp = await db
+    .select()
+    .from(otp)
+    .where(and(eq(otp.userId, user[0].id), gt(otp.expiresIn, now), eq(otp.otp, otpInput)))
+    .orderBy(desc(otp.id))
+    .limit(1);
+
+  if (!validOtp || validOtp.length === 0 || validOtp[0].otp !== otpInput) {
+    return res.status(401).send({ message: 'Invalid or expired OTP' });
+  }
+
+  await db.delete(otp).where(eq(otp.id, validOtp[0].id));
+  await db.update(users).set({ emailVerified: true }).where(eq(users.id, user[0].id));
+
+  const secret = process.env['JWT_SECRET'];
+
+  if (!secret) return res.json({ message: 'JWT_SECRET environment variable is not defined' });
+
+  const token = jwt.sign({ id: user[0].id, email: user[0].email }, secret, { expiresIn: '1h' });
+  return res.json({ token });
+});
+
+// *Register
+apiRouter.post('/auth/register', async (req, res) => {
+  const { email, password } = req.body;
+  const hashed = await bcrypt.hash(password, 10);
+  try {
+    const existingUser = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    if (existingUser.length > 0) {
+      return res.status(400).send({ message: 'User already exists' });
+    }
+
+    const [newUser] = await db.insert(users).values({
+      email,
+      passwordHash: hashed,
+    }).returning();
+
+    const generatedOTP = generateOTP();
+    await db.insert(otp).values({
+      userId: newUser.id,
+      otp: generatedOTP,
+      expiresIn: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes from now
+    });
+
+    await transporter.sendMail({
+      from: "Rejection Radar <no-reply@rejectionradar.com>",
+      to: email,
+      subject: 'Verify Your Email',
+      html: `<p>Welcome to Rejection Radar!</p><p>Your verification code is: <strong>${generatedOTP}</strong></p><p>This code will expire in 10 minutes.</p>`,
+    });
+
+    return res.status(201).send({ message: 'User registered successfully. Please check your email for verification code.' });
+  } catch (error) {
+    console.error('Registration error:', error);
+    return res.status(500).send({ message: 'Error registering user', error });
+  }
+});
+
+// *Login
+apiRouter.post('/auth/login', async (req, res) => {
+  const { email, password } = req.body;
+  const user = await db.select().from(users).where(eq(users.email, email)).limit(1);
+  if (!user || user.length === 0)
+    return res.status(401).send({ message: 'Invalid email or password' });
+
+  if (!user[0].emailVerified) {
+    return res.status(403).json({ message: 'Email not verified' });
+  }
+
+  const match = await bcrypt.compare(password, user[0].passwordHash);
+  if (!match) return res.status(401).send({ message: 'Invalid email or password' });
+
+  const secret = process.env['JWT_SECRET'];
+  if (!secret) {
+    return res.json({ message: 'JWT_SECRET environment variable is not defined' });
+  }
+
+  const token = jwt.sign({ id: user[0].id, email: user[0].email }, secret, { expiresIn: '1h' });
+  return res.json({ token });
+});
+
+// Mount API router
+app.use('/api', apiRouter);
+
 /**
  * Serve static files from /browser
  */
@@ -32,19 +202,25 @@ app.use(
     maxAge: '1y',
     index: false,
     redirect: false,
-  }),
+  })
 );
 
 /**
  * Handle all other requests by rendering the Angular application.
  */
-app.use((req, res, next) => {
-  angularApp
-    .handle(req)
-    .then((response) =>
-      response ? writeResponseToNodeResponse(response, res) : next(),
-    )
-    .catch(next);
+app.use(async (req, res, next) => {
+  if (req.path.startsWith('/api')) return next();
+
+  try {
+    const response = await angularApp.handle(req, { cloneRequest: true });
+    if (response) {
+      writeResponseToNodeResponse(response, res);
+    } else {
+      next();
+    }
+  } catch (err) {
+    next(err);
+  }
 });
 
 /**
