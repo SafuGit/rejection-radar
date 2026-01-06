@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { AuthService } from '../../services/auth-service';
 
 @Component({
   selector: 'app-register',
@@ -7,5 +8,7 @@ import { Component } from '@angular/core';
   styleUrl: './register.css',
 })
 export class Register {
+  constructor(private authService: AuthService) {}
+
 
 }
