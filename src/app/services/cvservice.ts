@@ -12,7 +12,7 @@ export class CVService {
     const formdata = new FormData();
     formdata.append('cv', file);
 
-    return this.http.post<{message: string, text: string, pages: number, cvJson: any}>('/api/parse-cv', formdata)
+    return this.http.post<{message: string, text: string, pages: number, cvJson: any}>('/api/upload-cv', formdata)
       .subscribe({
         next: (response) => {
           this.cvData.set(response);

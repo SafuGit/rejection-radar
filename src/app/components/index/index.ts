@@ -1,9 +1,10 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { HlmCardImports } from '../../../libs/ui/card/src';
 import { HlmProgressImports } from '../../../libs/ui/progress/src';
 import { HlmButtonImports } from '../../../libs/ui/button/src';
 import { HlmLabelImports } from '../../../libs/ui/label/src';
 import { CommonModule } from '@angular/common';
+import { CVService } from '../../services/cvservice';
 
 @Component({
   selector: 'app-index',
@@ -22,6 +23,7 @@ import { CommonModule } from '@angular/common';
   },
 })
 export class Index {
+  private cvService = inject(CVService);
   currentStep = signal(1);
   totalSteps = 3;
   selectedFile = signal<File | null>(null);
@@ -99,6 +101,9 @@ export class Index {
 
   nextStep(): void {
     if (this.currentStep() < this.totalSteps) {
+      if (this.currentStep() === 1 && this.selectedFile()) {
+        this.cvService.uploadCV(this.selectedFile()!);
+      }
       this.currentStep.update((step) => step + 1);
     }
   }
