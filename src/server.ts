@@ -16,6 +16,7 @@ import Busboy from 'busboy';
 import pdf from 'pdf-parse';
 import { parseCVtoJSON } from './app/util/cvToJson';
 import { parseJobPostingToJSON } from './app/util/jdToJson';
+import { websiteReport } from './app/util/htmlreport';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
 
@@ -272,6 +273,28 @@ apiRouter.post('/parse-jd', verifyJWT, async (req, res) => {
     console.error('JD parse error:', err);
     return res.status(500).json({ message: 'Error parsing job description', error: err });
   }
+});
+
+// *Get Website HTML & Analyze
+apiRouter.get('/website-analysis', async (req, res) => {
+  const { url } = req.query;
+
+  if (!url || typeof url !== 'string') {
+    return res.status(400).json({ error: 'URL query parameter is required' });
+  }
+
+  const response = await fetch(url);
+  if (!response.ok) {
+    return res.status(500).json({ error: 'Failed to fetch the website' });
+  }
+
+  const html = await response.text();
+  const result = await websiteReport(html);
+  if (!result) {
+    return res.status(500).json({ error: 'Failed to analyze the website' });
+  }
+
+  return res.status(200).json({ analysis: result });
 });
 
 // Mount API router
