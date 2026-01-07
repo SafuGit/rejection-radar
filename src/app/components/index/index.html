@@ -425,10 +425,40 @@
         </div>
       }
 
-      <!-- Step 3: Paste Job Description (Placeholder) -->
+      <!-- Step 3: Paste Job Description -->
       @if (currentStep() === 3) {
-        <div class="text-center py-8">
-          <p class="text-muted-foreground">Paste Job Description step - Coming soon</p>
+        <div class="space-y-6">
+          <div hlmFormField>
+            <label hlmLabel class="mb-2 block">Company Name</label>
+            <input
+              hlmInput
+              type="text"
+              [(ngModel)]="jobData().companyName"
+              placeholder="Enter company name"
+            />
+          </div>
+
+          <div hlmFormField>
+            <label hlmLabel class="mb-2 block">Company URL</label>
+            <input
+              hlmInput
+              type="url"
+              [(ngModel)]="jobData().companyUrl"
+              placeholder="https://company.com/careers/job-posting"
+            />
+          </div>
+
+          <div hlmFormField>
+            <label hlmLabel class="mb-2 block">Job Description</label>
+            <textarea
+              hlmInput
+              [(ngModel)]="jobData().jobDescription"
+              placeholder="Paste the complete job description here..."
+              rows="20"
+              class="resize-y font-mono text-sm"
+            ></textarea>
+            <p class="text-xs text-muted-foreground mt-2">Paste the entire job description including requirements, responsibilities, and qualifications.</p>
+          </div>
         </div>
       }
     </div>

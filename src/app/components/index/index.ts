@@ -38,6 +38,11 @@ export class Index {
 
   cvData = computed(() => this.cvService.cvData());
   editableCV = signal<any>(null);
+  jobData = signal({
+    companyName: '',
+    companyUrl: '',
+    jobDescription: ''
+  });
 
   readonly steps = [
     { number: 1, title: 'Upload CV', description: 'Upload your resume in PDF format' },
