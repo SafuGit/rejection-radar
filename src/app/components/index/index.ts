@@ -28,6 +28,7 @@ export class Index {
   totalSteps = 3;
   selectedFile = signal<File | null>(null);
   isDragOver = signal(false);
+  isUploading = this.cvService.isLoading;
 
   readonly steps = [
     { number: 1, title: 'Upload CV', description: 'Upload your resume in PDF format' },
@@ -103,8 +104,15 @@ export class Index {
     if (this.currentStep() < this.totalSteps) {
       if (this.currentStep() === 1 && this.selectedFile()) {
         this.cvService.uploadCV(this.selectedFile()!);
+        const checkUpload = setInterval(() => {
+          if (!this.isUploading()) {
+            clearInterval(checkUpload);
+            this.currentStep.update((step) => step + 1);
+          }
+        }, 100);
+      } else {
+        this.currentStep.update((step) => step + 1);
       }
-      this.currentStep.update((step) => step + 1);
     }
   }
 
