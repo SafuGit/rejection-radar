@@ -5,13 +5,18 @@ import {
   writeResponseToNodeResponse,
 } from '@angular/ssr/node';
 import express, { NextFunction, Request, Response } from 'express';
-import { join } from 'node:path';
+import { join, parse } from 'node:path';
 import bcrypt from 'bcryptjs';
 import { db } from './db';
 import { otp, users } from './db/schema';
 import jwt from 'jsonwebtoken';
 import { and, desc, eq, gt } from 'drizzle-orm';
 import nodemailer from 'nodemailer';
+import Busboy from 'busboy';
+import pdf from 'pdf-parse';
+import { parseCVtoJSON } from './app/util/cvToJson';
+import { parseJobPostingToJSON } from './app/util/jdToJson';
+import { websiteReport } from './app/util/htmlreport';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
 
@@ -189,6 +194,107 @@ apiRouter.post('/auth/login', async (req, res) => {
 
   const token = jwt.sign({ id: user[0].id, email: user[0].email }, secret, { expiresIn: '1h' });
   return res.json({ token });
+});
+
+// *Upload CV
+apiRouter.post('/upload-cv', verifyJWT, async (req, res) => {
+  try {
+
+    const busboy = Busboy({
+      headers: req.headers,
+      limits: {
+        fileSize: 10 * 1024 * 1024,
+      }
+    });
+
+    req.pipe(busboy);
+
+    let pdfBuffer = Buffer.alloc(0);
+
+    busboy.on('file', (fieldname, file, info) => {
+      const { mimeType } = info;
+      if (mimeType !== 'application/pdf') {
+        file.resume();
+        return res.status(400).json({ message: 'Only PDF files are allowed' });
+      }
+
+      file.on('data', (data) => {
+        pdfBuffer = Buffer.concat([pdfBuffer, data]);
+        return;
+      });
+
+      return;
+    });
+
+    busboy.on('finish', async () => {
+      if (!pdfBuffer.length) {
+        return res.status(400).json({ message: 'No CV uploaded' });
+      }
+
+      try {
+        const parsed = await pdf(pdfBuffer);
+
+        const extractedText = parsed.text.trim();
+
+        if (!extractedText) {
+          return res.status(400).json({ message: 'Unable to extract text from PDF' });
+        }
+
+        const parsedJson = await parseCVtoJSON(extractedText);
+
+        return res.status(200).json({
+          message: 'CV parsed successfully',
+          text: extractedText,
+          pages: parsed.numpages,
+          cvJson: parsedJson,
+        });
+      } catch (err) {
+        console.error('PDF parse error:', err);
+        return res.status(400).json({ message: 'Invalid or corrupted PDF' });
+      }
+    });
+  } catch (err) {
+    console.error('Upload error:', err);
+    res.status(500).json({ message: 'Error uploading CV', error: err });
+  }
+});
+
+// *Parse JD
+apiRouter.post('/parse-jd', verifyJWT, async (req, res) => {
+  const { jd } = req.body;
+  if (!jd || jd.trim() === '') {
+    return res.status(400).json({ message: 'Job description is required' });
+  }
+
+  try {
+    const parsedJD = await parseJobPostingToJSON(jd);
+    return res.status(200).json({ message: 'JD parsed successfully', jdJson: parsedJD });
+  } catch (err) {
+    console.error('JD parse error:', err);
+    return res.status(500).json({ message: 'Error parsing job description', error: err });
+  }
+});
+
+// *Get Website HTML & Analyze
+apiRouter.get('/website-analysis', async (req, res) => {
+  const { url } = req.query;
+
+  if (!url || typeof url !== 'string') {
+    return res.status(400).json({ error: 'URL query parameter is required' });
+  }
+
+  const response = await fetch(url);
+  if (!response.ok) {
+    return res.status(500).json({ error: 'Failed to fetch the website' });
+  }
+
+  const html = await response.text();
+  const result = await websiteReport(html);
+  if (!result) {
+    return res.status(500).json({ error: 'Failed to analyze the website' });
+  }
+
+  return res.status(200).json({ analysis: result });
 });
 
 // Mount API router

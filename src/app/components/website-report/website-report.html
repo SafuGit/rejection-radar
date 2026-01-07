@@ -1,0 +1,58 @@
+<div class="w-full max-w-5xl mx-auto">
+  <div hlmCard class="shadow-lg">
+    <div hlmCardHeader class="border-b">
+      <h2 hlmCardTitle class="text-3xl font-bold">Company Overview Report</h2>
+      <p hlmCardDescription class="text-base mt-2">
+        AI-generated insights about the company based on their website
+      </p>
+    </div>
+
+    @if (hasReport()) {
+      <div hlmCardContent class="pt-6">
+        <div class="prose prose-slate dark:prose-invert max-w-none">
+          <div class="bg-muted/50 rounded-lg p-6 mb-4 border border-border">
+            <div class="flex items-start gap-3 mb-4">
+              <svg class="w-6 h-6 text-primary mt-1 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <div class="flex-1">
+                <h3 class="text-lg font-semibold mb-1">About This Report</h3>
+                <p class="text-sm text-muted-foreground">
+                  This overview provides insights into the company's culture, values, and work environment to help you better understand the organization you're applying to.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="report-content whitespace-pre-wrap leading-relaxed text-foreground">
+            {{ htmlReport() }}
+          </div>
+        </div>
+      </div>
+
+      <div hlmCardFooter class="flex justify-between items-center border-t pt-6">
+        <p class="text-sm text-muted-foreground">
+          Generated from company website analysis
+        </p>
+        <button hlmBtn variant="outline" (click)="printReport()">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+          </svg>
+          Print Report
+        </button>
+      </div>
+    } @else {
+      <div hlmCardContent class="pt-6">
+        <div class="flex flex-col items-center justify-center py-12 text-center">
+          <svg class="w-16 h-16 text-muted-foreground/50 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
+          <h3 class="text-xl font-semibold mb-2">No Report Available</h3>
+          <p class="text-muted-foreground max-w-md">
+            No company website analysis has been generated yet. Please submit a valid company website URL in the job description form to generate this report.
+          </p>
+        </div>
+      </div>
+    }
+  </div>
+</div>
