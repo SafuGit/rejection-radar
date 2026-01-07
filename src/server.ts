@@ -13,7 +13,7 @@ import jwt from 'jsonwebtoken';
 import { and, desc, eq, gt } from 'drizzle-orm';
 import nodemailer from 'nodemailer';
 import Busboy from 'busboy';
-import { PDFParse } from 'pdf-parse';
+import pdf from 'pdf-parse';
 import { parseCVtoJSON } from './app/util/cvToJson';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
@@ -230,8 +230,7 @@ apiRouter.post('/upload-cv', verifyJWT, async (req, res) => {
       }
 
       try {
-        const parser = new PDFParse({ data: pdfBuffer });
-        const parsed = await parser.getText();
+        const parsed = await pdf(pdfBuffer);
 
         const extractedText = parsed.text.trim();
 
@@ -244,7 +243,7 @@ apiRouter.post('/upload-cv', verifyJWT, async (req, res) => {
         return res.status(200).json({
           message: 'CV parsed successfully',
           text: extractedText,
-          pages: parsed.pages.length,
+          pages: parsed.numpages,
           cvJson: parsedJson,
         });
       } catch (err) {
