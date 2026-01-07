@@ -11,7 +11,7 @@ export class JDService {
   htmlReport = signal<string>('');
 
   parseJD(jobDescription: string) {
-    return this.http.post<{message: string, jdJson: any}>('/api/parse-jd', { jobDescription })
+    return this.http.post<{message: string, jdJson: any}>('/api/parse-jd', { jd: jobDescription })
       .subscribe({
         next: (response) => {
           this.jdJson.set(response.jdJson);

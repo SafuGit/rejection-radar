@@ -276,8 +276,8 @@ apiRouter.post('/parse-jd', verifyJWT, async (req, res) => {
 });
 
 // *Get Website HTML & Analyze
-apiRouter.get('/website-analysis', async (req, res) => {
-  const { url } = req.query;
+apiRouter.post('/website-analysis', async (req, res) => {
+  const { url } = req.body;
 
   if (!url || typeof url !== 'string') {
     return res.status(400).json({ error: 'URL query parameter is required' });
