@@ -132,11 +132,25 @@ export class Index {
         this.currentStep.update((step) => step + 1);
       }
     } else if (this.currentStep() === this.totalSteps) {
-      // On the last step, parse the job description
+      // On the last step, parse the job description and analyze website if provided
       const jd = this.jobData();
       if (jd.jobDescription.trim()) {
         this.jdService.parseJD(jd.jobDescription);
       }
+
+      // Analyze company website if a valid URL is provided
+      if (jd.companyUrl.trim() && this.isValidUrl(jd.companyUrl)) {
+        this.jdService.analyseWebsite(jd.companyUrl);
+      }
+    }
+  }
+
+  isValidUrl(url: string): boolean {
+    try {
+      new URL(url);
+      return true;
+    } catch {
+      return false;
     }
   }
 
