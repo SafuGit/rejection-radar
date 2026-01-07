@@ -205,10 +205,223 @@
         </div>
       }
 
-      <!-- Step 2: Edit Parsed Profile (Placeholder) -->
-      @if (currentStep() === 2) {
-        <div class="text-center py-8">
-          <p class="text-muted-foreground">Edit Parsed Profile step - Coming soon</p>
+      <!-- Step 2: Edit Parsed Profile -->
+      @if (currentStep() === 2 && editableCV()) {
+        <div class="space-y-6 max-h-150 overflow-y-auto pr-2">
+          <!-- Personal Information -->
+          <div class="space-y-4">
+            <h3 class="text-lg font-semibold border-b pb-2">Personal Information</h3>
+
+            <div hlmFormField>
+              <label hlmLabel class="mb-2 block">Name</label>
+              <input hlmInput type="text" [(ngModel)]="editableCV().name" placeholder="Full Name" />
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div hlmFormField>
+                <label hlmLabel class="mb-2 block">Email</label>
+                <input hlmInput type="email" [(ngModel)]="editableCV().email" placeholder="email@example.com" />
+              </div>
+
+              <div hlmFormField>
+                <label hlmLabel class="mb-2 block">Phone</label>
+                <input hlmInput type="tel" [(ngModel)]="editableCV().phone" placeholder="+1234567890" />
+              </div>
+            </div>
+
+            <div hlmFormField>
+              <label hlmLabel class="mb-2 block">Summary</label>
+              <textarea
+                hlmInput
+                [(ngModel)]="editableCV().summary"
+                placeholder="Professional summary"
+                rows="6"
+                class="resize-y"
+              ></textarea>
+            </div>
+
+            <div hlmFormField>
+              <label hlmLabel class="mb-2 block">Future Goals</label>
+              <textarea
+                hlmInput
+                [(ngModel)]="editableCV().futureGoals"
+                placeholder="Career goals and aspirations"
+                rows="6"
+                class="resize-y"
+              ></textarea>
+            </div>
+          </div>
+
+          <!-- Experience -->
+          <div class="space-y-4">
+            <div class="flex items-center justify-between border-b pb-2">
+              <h3 class="text-lg font-semibold">Experience</h3>
+              <button hlmBtn size="sm" variant="outline" (click)="addExperience()" type="button">
+                + Add Experience
+              </button>
+            </div>
+
+            @for (exp of editableCV().experience; track trackByIndex($index)) {
+              <div class="space-y-3 p-4 border rounded-lg bg-muted/30">
+                <div class="flex justify-between items-start gap-2">
+                  <div hlmFormField class="flex-1">
+                    <label hlmLabel class="mb-2 block">Job Title</label>
+                    <input hlmInput type="text" [(ngModel)]="exp.title" placeholder="Position" />
+                  </div>
+                  <button
+                    hlmBtn
+                    size="sm"
+                    variant="ghost"
+                    (click)="removeExperience($index)"
+                    type="button"
+                    class="text-destructive"
+                  >
+                    Remove
+                  </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div hlmFormField>
+                    <label hlmLabel class="mb-2 block">Company</label>
+                    <input hlmInput type="text" [(ngModel)]="exp.company" placeholder="Company Name" />
+                  </div>
+
+                  <div hlmFormField>
+                    <label hlmLabel class="mb-2 block">Start Date</label>
+                    <input hlmInput type="text" [(ngModel)]="exp.startDate" placeholder="Jan 2020" />
+                  </div>
+
+                  <div hlmFormField>
+                    <label hlmLabel class="mb-2 block">End Date</label>
+                    <input hlmInput type="text" [(ngModel)]="exp.endDate" placeholder="Present" />
+                  </div>
+                </div>
+
+                <div hlmFormField>
+                  <label hlmLabel class="mb-2 block">Details</label>
+                  <textarea
+                    hlmInput
+                    [(ngModel)]="exp.details"
+                    placeholder="Job responsibilities and achievements"
+                    rows="5"
+                    class="resize-y"
+                  ></textarea>
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- Projects -->
+          <div class="space-y-4">
+            <div class="flex items-center justify-between border-b pb-2">
+              <h3 class="text-lg font-semibold">Projects</h3>
+              <button hlmBtn size="sm" variant="outline" (click)="addProject()" type="button">
+                + Add Project
+              </button>
+            </div>
+
+            @for (project of editableCV().projects; track trackByIndex($index)) {
+              <div class="space-y-3 p-4 border rounded-lg bg-muted/30">
+                <div class="flex justify-between items-start gap-2">
+                  <div hlmFormField class="flex-1">
+                    <label hlmLabel class="mb-2 block">Project Name</label>
+                    <input hlmInput type="text" [(ngModel)]="project.name" placeholder="Project Name" />
+                  </div>
+                  <button
+                    hlmBtn
+                    size="sm"
+                    variant="ghost"
+                    (click)="removeProject($index)"
+                    type="button"
+                    class="text-destructive"
+                  >
+                    Remove
+                  </button>
+                </div>
+
+                <div hlmFormField>
+                  <label hlmLabel class="mb-2 block">Description</label>
+                  <textarea
+                    hlmInput
+                    [(ngModel)]="project.description"
+                    placeholder="Project description"
+                    rows="4"
+                    class="resize-y"
+                  ></textarea>
+                </div>
+
+                <div hlmFormField>
+                  <label hlmLabel class="mb-2 block">Technologies (comma-separated)</label>
+                  <input
+                    hlmInput
+                    type="text"
+                    [value]="project.technologies.join(', ')"
+                    (input)="updateTechnologies(project, $any($event.target).value)"
+                    placeholder="React, Node.js, MongoDB"
+                  />
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- Skills -->
+          <div class="space-y-4">
+            <div class="flex items-center justify-between border-b pb-2 mb-4">
+              <h3 class="text-lg font-semibold">Skills</h3>
+              <button hlmBtn size="sm" variant="outline" (click)="addSkill()" type="button">
+                + Add Skill
+              </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+              @for (skill of editableCV().skills; track trackByIndex($index)) {
+                <div class="flex gap-2 items-center">
+                  <input
+                    hlmInput
+                    type="text"
+                    [(ngModel)]="editableCV().skills[$index]"
+                    placeholder="Skill name"
+                    class="flex-1"
+                  />
+                  <button
+                    hlmBtn
+                    size="sm"
+                    variant="ghost"
+                    (click)="removeSkill($index)"
+                    type="button"
+                    class="text-destructive"
+                  >
+                    ×
+                  </button>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Languages & Certifications -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div hlmFormField>
+              <label hlmLabel class="mb-2 block">Languages (comma-separated)</label>
+              <input
+                hlmInput
+                type="text"
+                [value]="editableCV().languages?.join(', ') || ''"
+                (input)="updateLanguages($any($event.target).value)"
+                placeholder="English, Spanish"
+              />
+            </div>
+
+            <div hlmFormField>
+              <label hlmLabel class="mb-2 block">Certifications (comma-separated)</label>
+              <input
+                hlmInput
+                type="text"
+                [value]="editableCV().certifications?.join(', ') || ''"
+                (input)="updateCertifications($any($event.target).value)"
+                placeholder="AWS Certified, Google Cloud"
+              />
+            </div>
+          </div>
         </div>
       }
 
