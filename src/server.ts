@@ -14,6 +14,7 @@ import { and, desc, eq, gt } from 'drizzle-orm';
 import nodemailer from 'nodemailer';
 import Busboy from 'busboy';
 import { PDFParse } from 'pdf-parse';
+import { parseCVtoJSON } from './app/util/cvToJson';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
 
@@ -238,10 +239,13 @@ apiRouter.post('/upload-cv', verifyJWT, async (req, res) => {
           return res.status(400).json({ message: 'Unable to extract text from PDF' });
         }
 
+        const parsedJson = await parseCVtoJSON(extractedText);
+
         return res.status(200).json({
           message: 'CV parsed successfully',
           text: extractedText,
           pages: parsed.pages.length,
+          cvJson: parsedJson,
         });
       } catch (err) {
         console.error('PDF parse error:', err);
