@@ -1,3 +1,7 @@
+import { GoogleGenAI } from '@google/genai';
+
+const gemini = new GoogleGenAI({ apiKey : process.env["GEMINI_API_KEY"] });
+
 export async function parseCVtoJSON(cvText: string) {
   const prompt = `
 You are an assistant that extracts CVs into a structured JSON.
@@ -56,21 +60,27 @@ CV TEXT:
 `;
 
   try {
-    const response = await fetch('https://apifreellm.com/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: prompt })
+    const response = await gemini.models.generateContent({
+      model: 'gemini-2.5-flash-lite',
+      contents: [
+        { text: prompt}
+      ]
     });
 
-    const data = await response.json();
+    const rawText = response.text?.trim();
 
-    if (data.status === 'success') {
-      const jsonOutput = JSON.parse(data.response);
-      return jsonOutput;
-    } else {
-      console.error('LLM Error:', data.error);
+    if (!rawText) {
+      console.error('Gemini returned empty response');
       return null;
     }
+
+    // Clean common LLM JSON issues
+    const cleaned = rawText
+      .replace(/```json/gi, '')
+      .replace(/```/g, '')
+      .trim();
+
+    return JSON.parse(cleaned);
   } catch (err) {
     console.error('Request failed:', err);
     return null;
