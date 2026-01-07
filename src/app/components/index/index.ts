@@ -8,6 +8,7 @@ import { HlmInputImports } from '../../../libs/ui/input/src';
 import { HlmFormFieldImports } from '../../../libs/ui/form-field/src';
 import { CommonModule } from '@angular/common';
 import { CVService } from '../../services/cvservice';
+import { JDService } from '../../services/jdservice';
 
 @Component({
   selector: 'app-index',
@@ -30,6 +31,7 @@ import { CVService } from '../../services/cvservice';
 })
 export class Index {
   private cvService = inject(CVService);
+  private jdService = inject(JDService);
   currentStep = signal(1);
   totalSteps = 3;
   selectedFile = signal<File | null>(null);
@@ -128,6 +130,12 @@ export class Index {
         }, 100);
       } else {
         this.currentStep.update((step) => step + 1);
+      }
+    } else if (this.currentStep() === this.totalSteps) {
+      // On the last step, parse the job description
+      const jd = this.jobData();
+      if (jd.jobDescription.trim()) {
+        this.jdService.parseJD(jd.jobDescription);
       }
     }
   }
