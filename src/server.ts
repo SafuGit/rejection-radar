@@ -15,6 +15,7 @@ import nodemailer from 'nodemailer';
 import Busboy from 'busboy';
 import pdf from 'pdf-parse';
 import { parseCVtoJSON } from './app/util/cvToJson';
+import { parseJobPostingToJSON } from './app/util/jdToJson';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
 
@@ -254,6 +255,22 @@ apiRouter.post('/upload-cv', verifyJWT, async (req, res) => {
   } catch (err) {
     console.error('Upload error:', err);
     res.status(500).json({ message: 'Error uploading CV', error: err });
+  }
+});
+
+// *Parse JD
+apiRouter.post('/parse-jd', verifyJWT, async (req, res) => {
+  const { jd } = req.body;
+  if (!jd || jd.trim() === '') {
+    return res.status(400).json({ message: 'Job description is required' });
+  }
+
+  try {
+    const parsedJD = await parseJobPostingToJSON(jd);
+    return res.status(200).json({ message: 'JD parsed successfully', jdJson: parsedJD });
+  } catch (err) {
+    console.error('JD parse error:', err);
+    return res.status(500).json({ message: 'Error parsing job description', error: err });
   }
 });
 
