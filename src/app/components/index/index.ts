@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { HlmCardImports } from '../../../libs/ui/card/src';
 import { HlmProgressImports } from '../../../libs/ui/progress/src';
 import { HlmButtonImports } from '../../../libs/ui/button/src';
@@ -32,11 +33,13 @@ import { JDService } from '../../services/jdservice';
 export class Index {
   private cvService = inject(CVService);
   private jdService = inject(JDService);
+  private router = inject(Router);
   currentStep = signal(1);
   totalSteps = 3;
   selectedFile = signal<File | null>(null);
   isDragOver = signal(false);
   isUploading = this.cvService.isLoading;
+  isProcessing = computed(() => this.jdService.isLoadingJD() || this.jdService.isLoadingWebsite());
 
   cvData = computed(() => this.cvService.cvData());
   editableCV = signal<any>(null);
@@ -134,14 +137,42 @@ export class Index {
     } else if (this.currentStep() === this.totalSteps) {
       // On the last step, parse the job description and analyze website if provided
       const jd = this.jobData();
-      if (jd.jobDescription.trim()) {
-        this.jdService.parseJD(jd.jobDescription);
+
+      if (!jd.jobDescription.trim()) {
+        alert('Please enter a job description');
+        return;
       }
 
+      const hasWebsiteUrl = jd.companyUrl.trim() && this.isValidUrl(jd.companyUrl);
+
+      // Parse JD
+      this.jdService.parseJD(jd.jobDescription);
+
       // Analyze company website if a valid URL is provided
-      if (jd.companyUrl.trim() && this.isValidUrl(jd.companyUrl)) {
+      if (hasWebsiteUrl) {
         this.jdService.analyseWebsite(jd.companyUrl);
       }
+
+      // Poll for completion
+      const checkProcessing = setInterval(() => {
+        const jdComplete = !this.jdService.isLoadingJD();
+        const websiteComplete = hasWebsiteUrl ? !this.jdService.isLoadingWebsite() : true;
+
+        if (jdComplete && websiteComplete) {
+          clearInterval(checkProcessing);
+
+          // Check for errors
+          if (this.jdService.jdError() || (hasWebsiteUrl && this.jdService.websiteError())) {
+            const errors = [];
+            if (this.jdService.jdError()) errors.push(this.jdService.jdError());
+            if (this.jdService.websiteError()) errors.push(this.jdService.websiteError());
+            alert('Error: ' + errors.join('. '));
+          } else {
+            // Success - navigate to report
+            this.router.navigate(['/website-report']);
+          }
+        }
+      }, 100);
     }
   }
 
