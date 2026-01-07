@@ -30,6 +30,9 @@
       ],
       "@spartan-ng/helm/label": [
         "./src/libs/ui/label/src/index.ts"
+      ],
+      "@spartan-ng/helm/progress": [
+        "./src/libs/ui/progress/src/index.ts"
       ]
     }
   },
