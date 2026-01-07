@@ -1,1 +1,248 @@
-<p>index works!</p>
+<div class="w-full max-w-2xl px-4">
+  <!-- Progress Bar with Steps -->
+  <div class="mb-8">
+    <div class="flex items-center justify-between mb-4">
+      @for (step of steps; track step.number) {
+        <div class="flex flex-col items-center flex-1">
+          <div
+            [class]="
+              'w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-colors ' +
+              (currentStep() > step.number
+                ? 'bg-primary text-primary-foreground'
+                : currentStep() === step.number
+                  ? 'bg-primary text-primary-foreground ring-4 ring-primary/20'
+                  : 'bg-secondary text-muted-foreground')
+            "
+          >
+            {{ step.number }}
+          </div>
+          <span
+            [class]="
+              'text-xs mt-2 text-center ' +
+              (currentStep() === step.number ? 'text-foreground font-medium' : 'text-muted-foreground')
+            "
+          >
+            {{ step.title }}
+          </span>
+        </div>
+        @if (step.number < totalSteps) {
+          <div
+            [class]="
+              'h-1 flex-1 mx-2 rounded transition-colors ' +
+              (currentStep() > step.number ? 'bg-primary' : 'bg-secondary')
+            "
+          ></div>
+        }
+      }
+    </div>
+
+    <div hlmProgress class="h-2">
+      <div
+        hlmProgressIndicator
+        [style.width.%]="progressValue"
+        role="progressbar"
+        [attr.aria-valuenow]="progressValue"
+        [attr.aria-valuemin]="0"
+        [attr.aria-valuemax]="100"
+      ></div>
+    </div>
+  </div>
+
+  <!-- Main Card -->
+  <section hlmCard>
+    <div hlmCardHeader>
+      <h2 hlmCardTitle class="text-2xl">{{ currentStepInfo.title }}</h2>
+      <p hlmCardDescription>{{ currentStepInfo.description }}</p>
+    </div>
+
+    <div hlmCardContent>
+      <!-- Step 1: Upload CV -->
+      @if (currentStep() === 1) {
+        <div class="space-y-4">
+          <!-- File Upload Area -->
+          <div
+            [class]="
+              'relative border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer ' +
+              (isDragOver()
+                ? 'border-primary bg-primary/5'
+                : selectedFile()
+                  ? 'border-green-500 bg-green-50 dark:bg-green-950/30'
+                  : 'border-border hover:border-primary/50')
+            "
+            (dragover)="onDragOver($event)"
+            (dragleave)="onDragLeave($event)"
+            (drop)="onDrop($event)"
+            (click)="triggerFileInput()"
+            role="button"
+            tabindex="0"
+            [attr.aria-label]="selectedFile() ? 'Change CV file' : 'Upload CV file'"
+          >
+            <input
+              type="file"
+              id="cv-upload"
+              accept=".pdf"
+              class="hidden"
+              (change)="onFileSelected($event)"
+              aria-label="Upload CV file input"
+            />
+
+            @if (selectedFile()) {
+              <div class="space-y-3">
+                <svg
+                  class="mx-auto h-12 w-12 text-green-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <div>
+                  <p class="text-sm font-medium text-foreground">{{ selectedFile()?.name }}</p>
+                  <p class="text-xs text-muted-foreground mt-1">
+                    {{ formatFileSize(selectedFile()?.size ?? 0) }}
+                  </p>
+                </div>
+                <button
+                  hlmBtn
+                  variant="outline"
+                  size="sm"
+                  (click)="removeFile(); $event.stopPropagation()"
+                  type="button"
+                  class="mt-2"
+                >
+                  Remove File
+                </button>
+              </div>
+            } @else {
+              <div class="space-y-3">
+                <svg
+                  class="mx-auto h-12 w-12 text-muted-foreground"
+                  stroke="currentColor"
+                  fill="none"
+                  viewBox="0 0 48 48"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+                <div class="space-y-1">
+                  <p class="text-sm font-medium">
+                    <span class="text-primary">Click to upload</span> or drag and drop
+                  </p>
+                  <p class="text-xs text-muted-foreground">PDF files only (MAX. 10MB)</p>
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- File Requirements -->
+          <div class="bg-muted/50 rounded-md p-4">
+            <h4 class="text-sm font-medium mb-2">File Requirements:</h4>
+            <ul class="text-sm text-muted-foreground space-y-1">
+              <li class="flex items-center gap-2">
+                <svg
+                  class="h-4 w-4 text-green-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+                PDF format only
+              </li>
+              <li class="flex items-center gap-2">
+                <svg
+                  class="h-4 w-4 text-green-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+                Maximum file size: 10MB
+              </li>
+              <li class="flex items-center gap-2">
+                <svg
+                  class="h-4 w-4 text-green-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+                Clear and readable text
+              </li>
+            </ul>
+          </div>
+        </div>
+      }
+
+      <!-- Step 2: Edit Parsed Profile (Placeholder) -->
+      @if (currentStep() === 2) {
+        <div class="text-center py-8">
+          <p class="text-muted-foreground">Edit Parsed Profile step - Coming soon</p>
+        </div>
+      }
+
+      <!-- Step 3: Paste Job Description (Placeholder) -->
+      @if (currentStep() === 3) {
+        <div class="text-center py-8">
+          <p class="text-muted-foreground">Paste Job Description step - Coming soon</p>
+        </div>
+      }
+    </div>
+
+    <div hlmCardFooter class="flex justify-between">
+      <button
+        hlmBtn
+        variant="outline"
+        (click)="previousStep()"
+        [disabled]="currentStep() === 1"
+        type="button"
+      >
+        Previous
+      </button>
+
+      <button
+        hlmBtn
+        (click)="nextStep()"
+        [disabled]="currentStep() === 1 && !selectedFile()"
+        type="button"
+      >
+        @if (currentStep() === totalSteps) {
+          Submit
+        } @else {
+          Next
+        }
+      </button>
+    </div>
+  </section>
+</div>
