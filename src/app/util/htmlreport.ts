@@ -1,4 +1,4 @@
-import { gemini } from "../lib/gemini";
+import { gemini } from '../lib/gemini';
 
 export async function websiteReport(htmlContent: string) {
   const prompt = `
@@ -64,11 +64,10 @@ ${htmlContent}
 Return **only** the Markdown report. No explanations. No JSON.
 `;
 
-
   try {
     const response = await gemini.models.generateContent({
       model: 'gemma-3-27b-it',
-      contents: [{ text: prompt }]
+      contents: [{ text: prompt }],
     });
 
     const rawText = response.text?.trim();
@@ -78,7 +77,12 @@ Return **only** the Markdown report. No explanations. No JSON.
       return null;
     }
 
-    return rawText;
+    const cleaned = rawText
+      .replace(/```(?:markdown|md)?/gi, '')
+      .replace(/```/g, '')
+      .trim();
+
+    return cleaned;
   } catch (err) {
     console.error('Request failed:', err);
     return null;
