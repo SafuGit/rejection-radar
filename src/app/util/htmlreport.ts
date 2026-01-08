@@ -2,49 +2,68 @@ import { gemini } from "../lib/gemini";
 
 export async function websiteReport(htmlContent: string) {
   const prompt = `
-You are a career insights analyst. I will provide you the **raw HTML of a company's landing page**.
-Your task is to analyze the company and produce a **Company Website Analysis Report**.
+You are a **career intelligence assistant**.
 
-Focus on identifying:
+I will provide you with the **raw HTML of a company's landing page**.
+Your job is to analyze ONLY what can be inferred from that page and produce a **clear, concise, and visually polished Markdown report**.
 
-1. **Company Overview**
-   - Name
-   - Website URL (if available)
-   - Short description of what the company does
+---
 
-2. **Specializations / Core Focus**
-   - Main services, products, or solutions
-   - Technologies, tools, or platforms mentioned
-   - Target clients or market segments
+## 🎯 Your Output MUST include ONLY the following 3 sections
 
-3. **Culture & Work Style**
-   - Remote-friendly or hybrid?
-   - Team structure (flat, hierarchical, cross-functional, project-based, etc.)
-   - Traits or values emphasized (innovation, results-driven, collaborative, client-first, etc.)
+### 1️⃣ What the Company Is
+- Company name (if identifiable)
+- What type of company it is (e.g., SaaS startup, agency, enterprise, marketplace, etc.)
+- A **1–2 sentence plain-English explanation** of the company
 
-4. **Signals / Additional Context**
-   - Tech focus or innovation emphasis
-   - Data or metrics-driven approaches
-   - Client-first or customer-oriented messaging
+---
 
-5. **Actionable Recommendations**
-   - Skills, experience, or projects a candidate should emphasize based on the company’s specialization
-   - How to adapt a CV or portfolio to align with their focus
-   - Tips for cover letter or messaging to match company culture
+### 2️⃣ What the Company Does
+- Core product(s), service(s), or solution(s)
+- What problem they solve or value they provide
+- Who their product/service is for (users, businesses, industry, etc.)
 
-**Rules:**
-- Focus **heavily on the company's specializations**; the rest (culture, signals) is context.
-- Avoid vague statements; extract concrete keywords, services, and technologies.
-- Keep it structured, readable, and human-friendly (like a report, not JSON).
-- If information is missing or unclear, make a **reasonable inference based on the content**.
-- Keep each section clearly labeled.
+Use **bullet points**, not paragraphs.
 
-**Input HTML:**
-"""${htmlContent}"""
+---
 
-**Output:**
-Produce a **Company Website Analysis Report** following the structure above.
-  `
+### 3️⃣ What YOU (a Job Applicant) Need to Be Skilled At
+- Concrete **technical skills**, **tools**, or **technologies** mentioned or implied
+- Relevant **domains** or **problem areas** the company works in
+- Types of experience or projects that would align well with this company
+
+Focus on **actionable, skill-based takeaways**, not generic advice.
+
+---
+
+## 🧾 Output Rules (Very Important)
+
+- Output **MUST be valid, clean, and beautiful Markdown**
+- Use:
+  - Clear headings
+  - Bullet points
+  - Bold keywords
+  - Emojis ONLY in section headers (minimal & professional)
+- Do **NOT** include:
+  - Company culture analysis
+  - Mission/vision fluff
+  - CV or cover letter tips
+  - Assumptions not grounded in the HTML
+- If something is unclear, make a **reasonable inference** and phrase it carefully (e.g., "Likely focuses on…").
+
+---
+
+## 📥 Input HTML
+"""
+${htmlContent}
+"""
+
+---
+
+## 📤 Output
+Return **only** the Markdown report. No explanations. No JSON.
+`;
+
 
   try {
     const response = await gemini.models.generateContent({
