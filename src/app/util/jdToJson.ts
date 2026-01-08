@@ -28,7 +28,7 @@ JOB POSTING:
 
   try {
     const response = await gemini.models.generateContent({
-      model: 'gemma-3-27b',
+      model: 'gemma-3-27b-it',
       contents: [{ text: prompt }]
     });
 
