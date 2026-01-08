@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { HlmCardImports } from '../../../libs/ui/card/src';
 import { HlmButtonImports } from '../../../libs/ui/button/src';
 import { JDService } from '../../services/jdservice';
+import { MarkdownModule } from "ngx-markdown";
 
 @Component({
   selector: 'app-website-report',
@@ -10,6 +11,7 @@ import { JDService } from '../../services/jdservice';
     CommonModule,
     HlmCardImports,
     HlmButtonImports,
+    MarkdownModule,
   ],
   templateUrl: './website-report.html',
   styleUrl: './website-report.css',

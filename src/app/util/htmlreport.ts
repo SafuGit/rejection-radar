@@ -48,7 +48,7 @@ Produce a **Company Website Analysis Report** following the structure above.
 
   try {
     const response = await gemini.models.generateContent({
-      model: 'gemini-2.5-flash-lite',
+      model: 'gemma-3-27b',
       contents: [{ text: prompt }]
     });
 
