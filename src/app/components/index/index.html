@@ -429,33 +429,36 @@
       @if (currentStep() === 3) {
         <div class="space-y-6">
           <div hlmFormField>
-            <label hlmLabel class="mb-2 block">Company Name</label>
+            <label hlmLabel for="companyName" class="mb-2 block">Company Name</label>
             <input
               hlmInput
               type="text"
               [(ngModel)]="jobData().companyName"
               placeholder="Enter company name"
+              id="companyName"
             />
           </div>
 
           <div hlmFormField>
-            <label hlmLabel class="mb-2 block">Company URL</label>
+            <label hlmLabel for="companyUrl" class="mb-2 block">Company URL</label>
             <input
               hlmInput
               type="url"
               [(ngModel)]="jobData().companyUrl"
               placeholder="https://company.com/careers/job-posting"
+              id="companyUrl"
             />
           </div>
 
           <div hlmFormField>
-            <label hlmLabel class="mb-2 block">Job Description</label>
+            <label hlmLabel for="jobDescription" class="mb-2 block">Job Description</label>
             <textarea
               hlmInput
               [(ngModel)]="jobData().jobDescription"
               placeholder="Paste the complete job description here..."
               rows="20"
               class="resize-y font-mono text-sm"
+              id="jobDescription"
             ></textarea>
             <p class="text-xs text-muted-foreground mt-2">Paste the entire job description including requirements, responsibilities, and qualifications.</p>
           </div>

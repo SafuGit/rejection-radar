@@ -10,8 +10,9 @@
     "serve:ssr": "node dist/rejection-radar/server/server.mjs",
     "db:migrate": "drizzle-kit migrate",
     "db:generate": "drizzle-kit generate",
-    "test": "playwright test",
-    "test:report": "playwright show-report"
+    "test": "playwright test --headed",
+    "test:report": "playwright show-report",
+    "test:watch": "playwright test --headed --debug"
   },
   "prettier": {
     "printWidth": 100,
